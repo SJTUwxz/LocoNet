@@ -142,7 +142,6 @@ class COCO:
             anns = self.dataset['annotations']
         else:
             if not len(imgIds) == 0:
-                print len(imgToAnns) , len(imgIds)
                 lists = [self.imgToAnns[imgId] for imgId in imgIds if imgId in self.imgToAnns]
                 anns = list(itertools.chain.from_iterable(lists))
             else:
@@ -439,7 +438,7 @@ class COCO:
         Transfer Pascal Format Annotations from data_dir to MSCOCO format numpy array
         """
         result = []
-        self.dataset['categories']=[{'supercategory':'erotic','id':0,'name':"breast"},{'supercategory':'erotic','id':1,'name':'vulva'},{'supercategory':'erotic', 'id':2,'name':'dick'},{'supercategory':'erotic','id':3,'name':"pubes"},{'supercategory':'erotic','id':4,'name':"ass"},{'supercategory':'sexy','id':5,'name':'breast_sexy'},{'supercategory':'sexy','id':6,'name':'frontleg_sexy'},{'supercategory':'sexy','id':7,'name':'ass_sexy'},{'supercatogory':'sexy','id':8,'name':'back_sexy'},{'supercategory':'sexy','id':'9','name':'body_sexy'}]
+        self.dataset['categories']=[{'supercategory':'erotic','id':0,'name':"breast"},{'supercategory':'erotic','id':1,'name':'vulva'},{'supercategory':'erotic', 'id':2,'name':'dick'},{'supercategory':'erotic','id':3,'name':"pubes"},{'supercategory':'erotic','id':4,'name':"ass"},{'supercategory':'sexy','id':5,'name':'breast_sexy'},{'supercategory':'sexy','id':6,'name':'frontleg_sexy'},{'supercategory':'sexy','id':7,'name':'ass_sexy'},{'supercatogory':'sexy','id':8,'name':'back_sexy'},{'supercategory':'sexy','id':9,'name':'body_sexy'}]
         categories = {'breast':0, 'vulva':1, 'dick':2, 'pubes':3,'ass':4444,'breast_sexy':5, 'frontleg_sexy':6,'ass_sexy':7,'back_sexy':8,'body_sexy':9}
         f = open(os.path.join(data_dir, 'ImageSets','Main',typ+'.txt'))
         self.dataset['images'] = []

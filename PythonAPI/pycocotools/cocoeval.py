@@ -79,8 +79,9 @@ class COCOeval:
         self.ious = {}                      # ious between all gts and dts
         if not cocoGt is None:
             self.params.imgIds = sorted(cocoGt.getImgIds())
-            print len(cocoGt.getImgIds())
+            print "cocoGt len:",len(self.params.imgIds)
             self.params.catIds = sorted(cocoGt.getCatIds())
+        print self.params.imgIds
 
 
     def _prepare(self):
@@ -240,7 +241,6 @@ class COCOeval:
         :return: dict (single image results)
         '''
         p = self.params
-        print "evaluateImg,{},{},{}".format(imgId,catId,aRng)
         if p.useCats:
             gt = self._gts[imgId,catId]
             dt = self._dts[imgId,catId]
@@ -459,7 +459,7 @@ class COCOeval:
             print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
             return mean_s
         def _summarizeDets():
-            stats = np.zeros((12,))
+            stats = np.zeros((15,))
             stats[0] = _summarize(1)
             stats[1] = _summarize(1, iouThr=.5, maxDets=self.params.maxDets[2])
             stats[2] = _summarize(1, iouThr=.75, maxDets=self.params.maxDets[2])
@@ -472,6 +472,9 @@ class COCOeval:
             stats[9] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[2])
             stats[10] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[2])
             stats[11] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[2])
+            stats[12] = _summarize(0, iouThr =.5,areaRng='all', maxDets=self.params.maxDets[2])
+            stats[13] = _summarize(0, iouThr =.4,areaRng='all', maxDets=self.params.maxDets[2])
+            stats[14] = _summarize(0, iouThr =.3,areaRng='all', maxDets=self.params.maxDets[2])
             return stats
         def _summarizeKps():
             stats = np.zeros((10,))
@@ -506,7 +509,7 @@ class Params:
         self.imgIds = []
         self.catIds = []
         # np.arange causes trouble.  the data point on arange is slightly larger than the true value
-        self.iouThrs = np.linspace(.5, 0.95, np.round((0.95 - .5) / .05) + 1, endpoint=True)
+        self.iouThrs = np.linspace(.3, 0.95, np.round((0.95 - .3) / .05) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, np.round((1.00 - .0) / .01) + 1, endpoint=True)
         self.maxDets = [1, 10, 100]
         self.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
@@ -517,7 +520,7 @@ class Params:
         self.imgIds = []
         self.catIds = []
         # np.arange causes trouble.  the data point on arange is slightly larger than the true value
-        self.iouThrs = np.linspace(.5, 0.95, np.round((0.95 - .5) / .05) + 1, endpoint=True)
+        self.iouThrs = np.linspace(.3, 0.95, np.round((0.95 - .3) / .05) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, np.round((1.00 - .0) / .01) + 1, endpoint=True)
         self.maxDets = [20]
         self.areaRng = [[0 ** 2, 1e5 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]

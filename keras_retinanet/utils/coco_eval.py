@@ -3,7 +3,7 @@ Copyright 2017-2018 Fizyr (https://fizyr.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+jou may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
@@ -86,7 +86,7 @@ def evaluate_coco(generator, model, threshold=0.05):
 
     # run COCO evaluation
     coco_eval = COCOeval(coco_true, coco_pred, 'bbox')
-    coco_eval.params.imgIds = image_ids
+    # coco_eval.params.imgIds = image_ids
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()

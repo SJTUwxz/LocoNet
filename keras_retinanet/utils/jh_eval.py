@@ -93,7 +93,8 @@ def evaluate_jh(generator, model, threshold=0.05):
 
     # run COCO evaluation
     coco_eval = COCOeval(coco_true, coco_pred, 'bbox')
-    coco_eval.params.imgIds = image_ids
+    print (image_ids) 
+    # coco_eval.params.imgIds = image_ids
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
