@@ -70,11 +70,17 @@ class Generator(object):
     def load_image(self, image_index):
         raise NotImplementedError("load_image method not implemented")
 
+    def load_image_name(self, image_index):
+        raise NotImplementedError("load image name method not implemented")
+
     def load_annotations(self, image_index):
         raise NotImplementedError("load_annotations method not implemented")
 
     def load_annotations_group(self, group_index):
         return [self.load_annotations(image_index) for image_index in self.groups[group_index]]
+    
+    def load_name_group(self, group_index):
+        return [self.load_image_name(image_index) for image_index in self.groups[group_index]]
 
     def load_image_group(self, group_index):
         return [self.load_image(image_index) for image_index in self.groups[group_index]]
@@ -135,6 +141,7 @@ class Generator(object):
         # load images and annotations
         image_group       = self.load_image_group(group_index)
         annotations_group = self.load_annotations_group(group_index)
+        image_names       = self.load_name_group(group_index)
 
         # perform preprocessing steps
         image_group, annotations_group = self.preprocess_group(image_group, annotations_group)
@@ -149,6 +156,12 @@ class Generator(object):
         for image_index, image in enumerate(image_group):
             image_batch[image_index, :image.shape[0], :image.shape[1], :image.shape[2]] = image
 
+        class_batch = np.zeros((self.batch_size, 2), dtype=np.int)
+        for image_index, im_name in enumerate(image_names):
+            if 'imgs' in im_name:
+                class_batch[image_index] = [0, 1]
+            else:
+                class_batch[image_index] = [1, 0] 
         # compute labels and regression targets
         labels_group      = [None] * self.batch_size
         regression_group = [None] * self.batch_size
@@ -166,5 +179,5 @@ class Generator(object):
         for index, (labels, regression) in enumerate(zip(labels_group, regression_group)):
             labels_batch[index, ...]     = labels
             regression_batch[index, ...] = regression
-
-        return image_batch, [regression_batch, labels_batch]
+        
+        return image_batch, [regression_batch, labels_batch, class_batch]

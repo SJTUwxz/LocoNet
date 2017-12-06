@@ -102,6 +102,9 @@ class PascalVocGenerator(Generator):
         path = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
         return cv2.imread(path)
 
+    def load_image_name(self, image_index):
+        return self.image_names[image_index]
+
     def __parse_annotation(self, element):
         truncated = _findNode(element, 'truncated', parse=int)
         difficult = _findNode(element, 'difficult', parse=int)
