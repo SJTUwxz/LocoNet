@@ -138,9 +138,9 @@ def __create_pyramid_features(C3, C4, C5, D5, feature_size=256):
     return P3, P4, P5, P6, P7
 
 def __create_resnet_features(C3, C4, C5):
-    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_conv1')(C5)
-    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_conv1')(D5_inter)
-    D5 = keras.layers.Conv2D(2048, kernel_size=3, strides=1, padding='same', name='D5_conv2')(D5_inter)
+    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_inter_conv1')(C5)
+    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_inter_conv2')(D5_inter)
+    D5 = keras.layers.Conv2D(2048, kernel_size=3, strides=1, padding='same', name='D5')(D5_inter)
 
     D6 = keras.layers.Conv2D(512, kernel_size=3, strides=2, padding='same', name='D6')(D5)
 
