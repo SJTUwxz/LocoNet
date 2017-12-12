@@ -113,7 +113,7 @@ def evaluate_jh(generator, model, threshold=0.05):
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
-    print sexy_sexy
-    print sexy_erotic
-    print erotic_erotic
-    print erotic_sexy
+    print(sexy_sexy)
+    print( sexy_erotic)
+    print(erotic_erotic)
+    print( erotic_sexy)

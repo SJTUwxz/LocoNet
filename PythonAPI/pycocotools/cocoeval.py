@@ -81,7 +81,6 @@ class COCOeval:
             self.params.imgIds = sorted(cocoGt.getImgIds())
             print "cocoGt len:",len(self.params.imgIds)
             self.params.catIds = sorted(cocoGt.getCatIds())
-        print self.params.imgIds
 
 
     def _prepare(self):

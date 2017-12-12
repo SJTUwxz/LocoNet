@@ -108,7 +108,7 @@ if __name__ == '__main__':
         validation_data=val_generator,
         validation_steps=3000,  # len(val_generator.image_names) // args.batch_size,
         callbacks=[
-            keras.callbacks.ModelCheckpoint('snapshots/resnet50_voc_best.h5', monitor='val_loss', verbose=1, save_best_only=True),
+            keras.callbacks.ModelCheckpoint('snapshots/resnet50_{epoch:02d}-{val_loss:.2f}.h5', monitor='val_loss', verbose=1, save_best_only=False),
             keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0),
         ],
     )
