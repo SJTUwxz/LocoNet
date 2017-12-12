@@ -32,7 +32,7 @@ keras.backend.tensorflow_backend.set_session(get_session())
 # In[ ]:
 
 
-model = keras.models.load_model('snapshots/resnet50_voc_best.h5', custom_objects=custom_objects)
+model = keras.models.load_model('/data/users/xiziwang/tools/nsp/snapshots/origin_resnet50_voc_best.h5', custom_objects=custom_objects)
 #print(model.summary())
 
 
@@ -60,8 +60,9 @@ index = 0
 
 
 # load image
-f = open('/home/xiziwang/tools/test_normal_images_final.txt','r')
+f = open('/data/users/xiziwang/tobelabeled/files.txt','r')
 files = f.read().splitlines()
+
 
 for fn in files:
 
@@ -70,7 +71,7 @@ for fn in files:
 
 # copy to draw on
   draw = image.copy()
-  draw = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
+  #draw = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
   filename = fn.split('/')[-1].strip('.jpg')
 # preprocess image for network
   image = val_generator.preprocess_image(image)
@@ -116,5 +117,5 @@ for fn in files:
   #plt.show()
   filename = fn.split('/')[-1]
   # plt.savefig('/home/xiziwang/tools/test_result/sexy/'+filename)
-  cv2.imwrite('/home/xiziwang/tools/test_result/normal/'+filename, draw) 
+  cv2.imwrite('/data/users/xiziwang/tobelabeled/labeledRGB/'+filename, draw) 
 

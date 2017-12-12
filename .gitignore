@@ -1,0 +1,7 @@
+*.pyc
+*.swn
+*.swo
+my.vim
+screenlog.*
+snapshots/*.h5
+*.json
