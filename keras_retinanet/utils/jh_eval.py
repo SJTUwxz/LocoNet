@@ -104,7 +104,7 @@ def evaluate_jh(generator, model, threshold=0.05):
     #coco_true = generator.coco
     data_dir = '/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007'
     coco = COCO()
-    coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','val'))) 
+    coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','test'))) 
     coco_pred = coco.loadRes('{}_bbox_results.json'.format(generator.set_name))
 
     # run COCO evaluation
