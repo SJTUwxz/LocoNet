@@ -3,4 +3,6 @@
 *.pyc
 *.swp
 screenlog.*
-snapshots/*
+snapshots/*.h5
+*.json
+my.vim
