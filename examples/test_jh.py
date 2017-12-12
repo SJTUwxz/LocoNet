@@ -60,8 +60,9 @@ index = 0
 
 
 # load image
-f = open('/home/xiziwang/tools/test_normal_images_final.txt','r')
+f = open('/home/xiziwang/tools/test_erotic_images.txt','r')
 files = f.read().splitlines()
+result = open('/home/xiziwang/tools/test_result_global/result.txt','w')
 
 for fn in files:
 
@@ -81,26 +82,28 @@ for fn in files:
 
 # process image
   start = time.time()
-  _, _, detections = model.predict_on_batch(np.expand_dims(image, axis=0))
+  _, _, detections, classes = model.predict_on_batch(np.expand_dims(image, axis=0))
   print("processing time: {}s".format(time.time() - start) )
-
 # compute predicted labels and scores
   predicted_labels = np.argmax(detections[0, :, 4:], axis=1)
   scores = detections[0, np.arange(detections.shape[1]), 4 + predicted_labels]
-
+  if classes[0][0] > classes[0][1]:
+    jhclass = 'sexy'
+  else:
+    jhclass = 'erotic'
 # correct for image scale
   detections[:, :4] /= scale
 
 # visualize detections
   for idx, (label, score) in enumerate(zip(predicted_labels, scores)):
-    if score < 0.3:
+    if score < 0.4:
       continue
     b = detections[0, idx, :4].astype(int)
     cv2.rectangle(draw, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 3)
     caption = "{} {:.3f}".format(val_generator.label_to_name(label), score)
     cv2.putText(draw, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 1)
     cv2.putText(draw, caption, (b[0], b[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
-    
+  result.write('{} {}\n'.format(fn, jhclass))
 # visualize annotations
   #for annotation in annotations:
   #  label = int(annotation[4])
@@ -116,5 +119,5 @@ for fn in files:
   #plt.show()
   filename = fn.split('/')[-1]
   # plt.savefig('/home/xiziwang/tools/test_result/sexy/'+filename)
-  cv2.imwrite('/home/xiziwang/tools/test_result/normal/'+filename, draw) 
+  cv2.imwrite('/home/xiziwang/tools/test_result_global/erotic/'+filename, draw) 
 

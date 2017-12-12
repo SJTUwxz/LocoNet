@@ -31,14 +31,19 @@ def evaluate_jh(generator, model, threshold=0.05):
     results = []
     image_ids = []
     #coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','val')))
-    for i in []:
-    #for i in range(generator.size()):
+    # for i in []:
+    for i in range(generator.size()):
         image = generator.load_image(i)
         image = preprocess_image(image)
         image, scale = generator.resize_image(image)
 
         # run network
-        _, _, detections = model.predict_on_batch(np.expand_dims(image, axis=0))
+        _, _, detections,scores = model.predict_on_batch(np.expand_dims(image, axis=0))
+
+        #jhclasses = scores[0]
+        #if jhclasses[0] > jhclasses[1]:
+        #    jh
+            
 
         # clip to image shape
         detections[:, :, 0] = np.maximum(0, detections[:, :, 0])
@@ -78,11 +83,11 @@ def evaluate_jh(generator, model, threshold=0.05):
         print('{}/{}'.format(i, len(generator.image_names)), end='\r')
 
     #if not len(results):
-        return
+        # return
 
     # write output
-    #json.dump(results, open('{}_bbox_results.json'.format(generator.set_name), 'w'), indent=4)
-    #json.dump(image_ids, open('{}_processed_image_ids.json'.format(generator.set_name), 'w'), indent=4)
+    json.dump(results, open('{}_bbox_results.json'.format(generator.set_name), 'w'), indent=4)
+    json.dump(image_ids, open('{}_processed_image_ids.json'.format(generator.set_name), 'w'), indent=4)
 
     # load results in COCO evaluation tool
     #coco_true = generator.coco
@@ -93,7 +98,6 @@ def evaluate_jh(generator, model, threshold=0.05):
 
     # run COCO evaluation
     coco_eval = COCOeval(coco_true, coco_pred, 'bbox')
-    print (image_ids) 
     # coco_eval.params.imgIds = image_ids
     coco_eval.evaluate()
     coco_eval.accumulate()
