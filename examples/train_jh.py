@@ -69,7 +69,7 @@ if __name__ == '__main__':
         loss={
             'regression'    : keras_retinanet.losses.smooth_l1(),
             'classification': keras_retinanet.losses.focal(),
-            'global_cls': 'categorical_crossentropy'
+            'global_cls': keras_retinanet.losses.classes_focal() 
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
@@ -106,9 +106,9 @@ if __name__ == '__main__':
         epochs=50,
         verbose=1,
         validation_data=val_generator,
-        validation_steps=3000,  # len(val_generator.image_names) // args.batch_size,
+        validation_steps= len(val_generator.image_names) // args.batch_size,
         callbacks=[
-            keras.callbacks.ModelCheckpoint('snapshots/resnet50_{epoch:02d}-{val_loss:.2f}.h5', monitor='val_loss', verbose=1, save_best_only=False),
+            keras.callbacks.ModelCheckpoint('snapshots/resnet50_{epoch:02d}-{val_loss:.5f}.h5', monitor='val_loss', verbose=1, save_best_only=False),
             keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0),
         ],
     )
