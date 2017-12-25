@@ -83,7 +83,7 @@ class Generator(object):
         return [self.load_image_name(image_index) for image_index in self.groups[group_index]]
 
     def load_image_group(self, group_index):
-        return [self.load_image(image_index) for image_index in self.groups[group_index]]
+        return [self.load_eroticdataset_image(image_index) for image_index in self.groups[group_index]]
 
     def resize_image(self, image):
         return resize_image(image, min_side=self.image_min_side, max_side=self.image_max_side)
@@ -156,12 +156,14 @@ class Generator(object):
         for image_index, image in enumerate(image_group):
             image_batch[image_index, :image.shape[0], :image.shape[1], :image.shape[2]] = image
 
-        class_batch = np.zeros((self.batch_size, 2), dtype=np.int)
+        class_batch = np.zeros((self.batch_size, 3), dtype=np.int)
         for image_index, im_name in enumerate(image_names):
-            if 'imgs' in im_name:
-                class_batch[image_index] = [0, 1]
+            if 'erotic' in im_name:
+                class_batch[image_index] = [0, 0, 1]
+            elif 'sexy' in im_name:
+                class_batch[image_index] = [0, 1, 0] 
             else:
-                class_batch[image_index] = [1, 0] 
+                class_batch[image_index] = [1, 0 ,0]
         # compute labels and regression targets
         labels_group      = [None] * self.batch_size
         regression_group = [None] * self.batch_size

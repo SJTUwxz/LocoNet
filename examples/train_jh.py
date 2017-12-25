@@ -69,7 +69,7 @@ if __name__ == '__main__':
         loss={
             'regression'    : keras_retinanet.losses.smooth_l1(),
             'classification': keras_retinanet.losses.focal(),
-            'global_cls': keras_retinanet.losses.classes_focal() 
+            'new_global_cls': keras_retinanet.losses.classes_focal() 
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )

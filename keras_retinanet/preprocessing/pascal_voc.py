@@ -70,7 +70,10 @@ class PascalVocGenerator(Generator):
         self.data_dir             = data_dir
         self.set_name             = set_name
         self.classes              = classes
-        self.image_names          = [l.strip() for l in open(os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt')).readlines()]
+        if os.path.isfile(os.path.join(data_dir, 'ImageSets','Main',set_name+'.txt') ) :
+            self.image_names          = [l.strip() for l in open(os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt')).readlines()]
+        else:
+            self.image_names = [l.strip() for l in open('/home/xiziwang/tools/freezed_train.txt')  ]
         self.image_extension      = image_extension
         self.skip_truncated       = skip_truncated
         self.skip_difficult       = skip_difficult
@@ -98,9 +101,18 @@ class PascalVocGenerator(Generator):
         image = Image.open(path)
         return float(image.width) / float(image.height)
 
+    def erotic_image_aspect_ratio(self, image_index):
+        path = self.image_names[image_index]
+        image = Image.open(path)
+        return float(image.width) / float(image.height)  
+
     def load_image(self, image_index):
         path = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
         return cv2.imread(path)
+    
+    def load_eroticdataset_image(self, image_index):
+        path = os.path.join(self.image_names[image_index])
+        return cv2.imread(path) 
 
     def load_image_name(self, image_index):
         return self.image_names[image_index]
