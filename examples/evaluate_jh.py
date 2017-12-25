@@ -20,7 +20,7 @@ import keras
 import keras.preprocessing.image
 from keras_retinanet.preprocessing.pascal_voc import PascalVocGenerator
 from keras_retinanet.utils.jh_eval import evaluate_jh
-from keras_retinanet.models.resnet import custom_objects
+from keras_retinanet.models.jh_resnet import custom_objects
 from keras_retinanet.utils.keras_version import check_keras_version
 
 import tensorflow as tf
