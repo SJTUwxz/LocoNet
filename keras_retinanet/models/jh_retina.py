@@ -149,7 +149,7 @@ def __create_resnet_features(C3, C4, C5):
     D7_pool = keras.layers.GlobalAveragePooling2D(name='D7_pool')(D7)
     
     #D8 = keras.layers.Reshape((-1, 3), name='resnet_classification_reshape')(D7_pool)
-    Global_cls = keras.layers.Dense(3, activation='softmax', name='global_cls')(D7_pool)
+    Global_cls = keras.layers.Dense(2, activation='softmax', name='global_cls')(D7_pool)
 
     return Global_cls, D5
 
