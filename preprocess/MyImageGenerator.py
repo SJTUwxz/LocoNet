@@ -136,7 +136,7 @@ class LabelFileIterator(Iterator):
         super(LabelFileIterator, self).__init__(num_per_epoch, batch_size,
                                                 shuffle, seed)
         self.broken_recorder = os.path.join(
-            file_path, '/home/xiziwang/tools/brokenImages.log')
+            file_path, './brokenImages.log')
         if not os.path.isfile(self.broken_recorder):
             os.mknod(self.broken_recorder)
 

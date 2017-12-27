@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import keras
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
+from keras.backend.tensorflow_backend import set_session
+set_session(session)
 
+import keras
 import keras_retinanet.losses
 from keras_retinanet.models.jh_resnet import ResNet50RetinaNet
 from keras_retinanet.preprocessing.pascal_voc import PascalVocGenerator
 from keras_retinanet.utils.keras_version import check_keras_version
 from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
-
-# from preprocessing.image import ImageDataGenerator
 
 from preprocess.MyImageGenerator import MyImageDataGenerator
 
@@ -26,8 +29,7 @@ def create_model(weights='imagenet'):
     return ResNet50RetinaNet(
         image,
         num_classes=10,
-        weights=
-        '/home/xiziwang/projects/retinanet/snapshots/resnet50_05-0.39389.h5')
+        weights='./data/snapshots/resnet50_05-0.39389.h5')
 
 
 if __name__ == '__main__':
@@ -45,7 +47,8 @@ if __name__ == '__main__':
         # shear_range=0.3,
         # zoom_range=0.08,
         # horizontal_flip=True,
-        rescale=1. / 255)
+        # rescale=1. / 255
+    )
 
     check_keras_version()
     # optionally choose specific GPU
@@ -64,17 +67,20 @@ if __name__ == '__main__':
 
     new_model = keras.models.Model(inputs=model.inputs, outputs=[Global_cls])
 
-    for layer in new_model.layers:
-        layer.trainable = False
+    # for layer in new_model.layers:
+    # layer.trainable = False
 
-    train_layers = ['D6', 'D7', 'D7_pool', 'global_3cls']
+    # train_layers = ['D6', 'D7', 'D7_pool', 'global_3cls']
 
-    for trainable_layer in train_layers:
-        new_model.get_layer(trainable_layer).trainable = True
+    # for trainable_layer in train_layers:
+    # new_model.get_layer(trainable_layer).trainable = True
 
+    optimizer = keras.optimizers.sgd(
+        lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
     new_model.compile(
         loss={'global_3cls': 'categorical_crossentropy'},
-        optimizer=keras.optimizers.adam(lr=0.0001), metrics=['accuracy'])
+        optimizer=optimizer,
+        metrics=['accuracy'])
 
     # print model summary
     print(new_model.summary())
@@ -95,8 +101,8 @@ if __name__ == '__main__':
     batch_size = 32
     is_ergodic_files = None
     balance = False
-    train_label_file = '/home/xiziwang/tools/freezed/10w_train.txt'
-    val_label_file = '/home/xiziwang/tools/freezed/10w_val.txt'
+    train_label_file = './data/labels/10w_train.txt'
+    val_label_file = './data/labels/10w_val.txt'
     train_gen = image_data_generator.flow_from_label_file(
         train_label_file,
         batch_size=batch_size,
@@ -119,7 +125,7 @@ if __name__ == '__main__':
         validation_steps=val_steps,
         callbacks=[
             keras.callbacks.ModelCheckpoint(
-                '/data/users/xiziwang/tools/nsp/ResNet50snapshots/10wfinetuned-resnet50_{epoch:02d}-{val_loss:.5f}.h5',
+                './data/snapshots/10wfinetuned-alllayers-resnet50_{epoch:02d}-{val_loss:.5f}.h5',
                 monitor='val_loss',
                 verbose=1,
                 save_best_only=False)

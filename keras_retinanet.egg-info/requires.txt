@@ -1,3 +1,0 @@
-keras
-keras-resnet
-six
