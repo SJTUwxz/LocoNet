@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     new_model.compile(
         loss={'global_3cls': 'categorical_crossentropy'},
-        optimizer=keras.optimizers.adam(lr=0.0001))
+        optimizer=keras.optimizers.adam(lr=0.0001), metrics=['accuracy'])
 
     # print model summary
     print(new_model.summary())
@@ -92,11 +92,11 @@ if __name__ == '__main__':
     # batch_size=16,
     # class_mode='categorical')
 
-    batch_size = 16
+    batch_size = 32
     is_ergodic_files = None
     balance = False
-    train_label_file = '/home/xiziwang/tools/freezed/labeled_freezed_train.txt'
-    val_label_file = '/home/xiziwang/tools/freezed/labeled_freezed_val.txt'
+    train_label_file = '/home/xiziwang/tools/freezed/10w_train.txt'
+    val_label_file = '/home/xiziwang/tools/freezed/10w_val.txt'
     train_gen = image_data_generator.flow_from_label_file(
         train_label_file,
         batch_size=batch_size,
@@ -119,9 +119,9 @@ if __name__ == '__main__':
         validation_steps=val_steps,
         callbacks=[
             keras.callbacks.ModelCheckpoint(
-                '/data/users/xiziwang/tools/nsp/ResNet50snapshots/finetuned-resnet50_{epoch:02d}-{val_loss:.5f}.h5',
+                '/data/users/xiziwang/tools/nsp/ResNet50snapshots/10wfinetuned-resnet50_{epoch:02d}-{val_loss:.5f}.h5',
                 monitor='val_loss',
                 verbose=1,
                 save_best_only=False)
         ])
-    new_model.save_weights('finetuned-resnet.h5')
+    new_model.save_weights('10wfinetuned-resnet.h5')

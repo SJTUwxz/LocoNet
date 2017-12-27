@@ -245,7 +245,10 @@ class LabelFileIterator(Iterator):
                 #only random transform during phase TRAIN
                 if self.phase == 'train':
                     x = self.image_data_generator.random_transform(x)
-                x = self.image_data_generator.standardize(x)
+                # x = self.image_data_generator.standardize(x)
+                x[..., 0] -= 103.939
+                x[..., 1] -= 116.779
+                x[..., 2] -= 123.68
             except Exception, e:
                 #record broken image and random generate x with the same shape of input
                 print("img broken: {}".format(fname))
@@ -308,4 +311,4 @@ if __name__ == '__main__':
     while 1:
         t1 = time.time()
         next(train_gen)
-        print ( 'generate one batch cost {}s'.format(time.time()-t1) ) 
+        print('generate one batch cost {}s'.format(time.time() - t1))
