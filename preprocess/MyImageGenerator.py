@@ -16,7 +16,6 @@ class MyImageDataGenerator(ImageDataGenerator):
                       generator,
                       steps,
                       save_file='./data/image_channel_mean_std.npy'):
-        print "enter fit generator"
         if os.path.isfile(save_file):
             mean, std = np.load(save_file)
             self.mean = mean
@@ -135,8 +134,7 @@ class LabelFileIterator(Iterator):
         self.is_ergodic_files = is_ergodic_files
         super(LabelFileIterator, self).__init__(num_per_epoch, batch_size,
                                                 shuffle, seed)
-        self.broken_recorder = os.path.join(
-            file_path, './brokenImages.log')
+        self.broken_recorder = os.path.join(file_path, './brokenImages.log')
         if not os.path.isfile(self.broken_recorder):
             os.mknod(self.broken_recorder)
 
@@ -251,7 +249,7 @@ class LabelFileIterator(Iterator):
                 x[..., 2] -= 123.68
             except Exception, e:
                 #record broken image and random generate x with the same shape of input
-                print("img broken: {}".format(fname))
+                # print("img broken: {}".format(fname))
                 if fname not in brokenlist:
                     brokenlist[fname] = 1
                     with open(self.broken_recorder, 'a+') as bf:
