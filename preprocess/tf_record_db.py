@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#================================================================
+#   God Bless You.
+#
+#   file name: tf_record_db.py
+#   author: klaus
+#   email: klaus.cheng@qq.com
+#   create date: 2017/12/29
+#   describtion:
+#
+#================================================================
 
 import os
 import cv2
@@ -114,12 +124,13 @@ class TfRecordDb(object):
         features = tf.parse_single_example(
             serialized_example, features=feature)
         # Convert the image data from string back to the numbers
-        image = tf.decode_raw(features[x_key], tf.float32)
+        image = tf.decode_raw(features[x_key], tf.uint8)
         # Cast label data into int32
         label = tf.cast(features[y_key], tf.int32)
         label = tf.one_hot(label, self.num_classes)
         # Reshape image data into the original shape
         image = tf.reshape(image, self.image_shape + (3, ))
+        image = tf.cast(image, tf.float32)
 
         # Any preprocessing here ...
 
@@ -127,8 +138,8 @@ class TfRecordDb(object):
         images, labels = tf.train.shuffle_batch(
             [image, label],
             batch_size=batch_size,
-            capacity=1024,
-            num_threads=4,
+            capacity=10240,
+            num_threads=6,
             min_after_dequeue=64)
         return images, labels
 
@@ -143,17 +154,17 @@ class TfRecordDb(object):
         addr: String.image path.
         image_shape: 2d tuple. reshape image to the size
         """
-        img = load_img(addr, target_size=image_shape)
-        x = np.asarray(img, dtype=np.float32)
-        x[..., 0] -= 103.939
-        x[..., 1] -= 116.779
-        x[..., 2] -= 123.68
-        return x
-        # img = cv2.imread(addr)
-        # img = cv2.resize(img, image_shape, interpolation=cv2.INTER_CUBIC)
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # img = img.astype(np.float32)
-        # return img
+        # img = load_img(addr, target_size=image_shape)
+        # x = np.asarray(img, dtype=np.float32)
+        # x[..., 0] -= 103.939
+        # x[..., 1] -= 116.779
+        # x[..., 2] -= 123.68
+        # return x
+        img = cv2.imread(addr)
+        img = cv2.resize(img, image_shape, interpolation=cv2.INTER_CUBIC)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img.astype(np.uint8)
+        return img
 
     def _int64_feature(self, value):
         return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))

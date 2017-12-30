@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#================================================================
+#   God Bless You.
+#
+#   file name: evaluate_tf_record_callback.py
+#   author: klaus
+#   email: klaus.cheng@qq.com
+#   create date: 2017/12/29
+#   describtion:
+#
+#================================================================
+
 import keras
 import numpy as np
 import tensorflow as tf
@@ -17,6 +28,7 @@ class EvaluateTfRecordCallback(Callback):
                  session,
                  checkout_save_path=None,
                  log_save_path=None,
+                 post_process=None,
                  batch_size=32):
         super(EvaluateTfRecordCallback, self).__init__()
         self.original_model = model
@@ -24,6 +36,7 @@ class EvaluateTfRecordCallback(Callback):
         self.session = session
         self.checkout_save_path = checkout_save_path
         self.log_save_path = log_save_path
+        self.post_process = post_process
         self.batch_size = batch_size
 
         # build eval model
@@ -83,10 +96,15 @@ class EvaluateTfRecordCallback(Callback):
             example.ParseFromString(string_record)
             img_string = (example.features.feature[x_key].bytes_list.value[0])
             label = int(example.features.feature[y_key].int64_list.value[0])
-            img_1d = np.fromstring(img_string, dtype=np.float32)
+            img_1d = np.fromstring(img_string, dtype=np.uint8)
             img = np.reshape(img_1d, self.tf_record_db.image_shape + (3, ))
             imgs.append(img)
             labels.append(label)
+
         imgs = np.array(imgs)
+        imgs = np.asarray(imgs, dtype=np.float32)
         labels = keras.utils.to_categorical(labels, num_classes=num_classes)
+        if self.post_process:
+            for f in self.post_process:
+                imgs = f(imgs)
         return imgs, labels

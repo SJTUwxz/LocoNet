@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#================================================================
+#   God Bless You. 
+#   
+#   file name: tf_record_finetune.py
+#   author: klaus
+#   email: klaus.cheng@qq.com
+#   create date: 2017/12/29
+#   describtion: 
+#
+#================================================================
+
+
 import tensorflow as tf
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -9,6 +21,7 @@ set_session(session)
 
 import os
 import keras
+import numpy as np
 import keras_retinanet.losses
 from keras_retinanet.models.jh_resnet import ResNet50RetinaNet
 from keras_retinanet.preprocessing.pascal_voc import PascalVocGenerator
@@ -52,10 +65,20 @@ def train(run_name,
     num_train = 103780
     train_steps = num_train // batch_size
 
+    def swap_rgb2bgr(img_array):
+        return img_array[..., ::-1]
+
+    def substract_mean(img_array):
+        return img_array - [103.939, 116.779, 123.68]
+
+    post_process = [swap_rgb2bgr, substract_mean]
+
     # build train model
     model = create_model(fix_layers=False)
     train_gen = TfRecordDb(None, 'train', train_record_path)
     images, labels = train_gen.read_record(batch_size=batch_size)
+    for f in post_process:
+        images = f(images)
     model_input = keras.layers.Input(tensor=images)
     train_model = model(model_input)
     train_model = keras.models.Model(inputs=model_input, outputs=train_model)
@@ -81,7 +104,7 @@ def train(run_name,
         model, val_gen, sess,
         os.path.join(snapshot_save_directory,
                      'snapshot_{epoch:02d}-{val_loss:.5f}--{val_acc:.5f}.h5'),
-        os.path.join(log_save_directory, 'training_log.csv'))
+        os.path.join(log_save_directory, 'training_log.csv'), post_process)
 
     # Fit the model using data from the TFRecord data tensors.
     coord = tf.train.Coordinator()
@@ -105,8 +128,10 @@ if __name__ == '__main__':
     logging.info('run_name: ' + run_name)
 
     batch_size = 32
-    train_record_path = './data/tf_records/10w_nsp/train.record'
-    val_record_path = './data/tf_records/10w_nsp/val.record'
+    # train_record_path = './data/tf_records/10w_nsp/train.record'
+    # val_record_path = './data/tf_records/10w_nsp/val.record'
+    train_record_path = './data/tf_records/10w_nsp/uint8_train.record'
+    val_record_path = './data/tf_records/10w_nsp/uint8_val.record'
 
     train(
         batch_size=batch_size,
