@@ -16,7 +16,7 @@ import sys
 import keras
 import numpy as np
 import tensorflow as tf
-from multiprocessing import Process, Queue,Value
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, log_loss
 from keras.layers import Input
 from keras.models import Model
 from keras.callbacks import Callback
@@ -56,52 +56,52 @@ class TfRecordEvalCallback(Callback):
         self._log_save_path = log_save_path
         self._batch_size = batch_size
 
-        self._data_queue = Queue()
-        self._is_done = Value('d', 0)
-
-    def _data_producer(self):
-        """produce the evaluate examples and put into ＠self._data_queue
-        Returns: None
-
-        """
-        imgs = []
-        labels = []
-        for string_record in self._tf_record_db.get_record_iterator():
-            img, label = self.tf_record_db.read_example(string_record)
-            imgs.append(img)
-            labels.append(label)
-            if len(imgs) == self._batch_size:
-                img_array = np.array(imgs)
-                img_array = np.asarray(img_array, dtype=np.float32)
-                label_array = np.array(labels)
-                self._data_queue.put([img_array, label_array])
-                imgs = []
-                labels = []
-            if len(labels) != 0:
-                img_array = np.array(imgs)
-                img_array = np.asarray(img_array, dtype=np.float32)
-                label_array = np.array(labels)
-                self._data_queue.put([img_array, label_array])
-        self._is_done.value = 1
+        self._model.compile(
+            loss='categorical_crossentropy',
+            optimizer='sgd',
+            metrics=['accuracy'])
 
     def _evaluate(self):
         """evaluate @self._tf_record_db
         Returns: return the metrics
         """
+
+        def _pred_batch(imgs, labels):
+            img_array = np.stack(imgs)
+            batch_pred_y = self._model.predict(img_array)
+            return batch_pred_y
+
+        batch_imgs = []
+        batch_labels = []
+        labels = []
+        pred_y = []
         results = None
         num_samples = 0
-        producer = Process(target=self._data_producer)
-        producer.start()
-        while self._is_done.value == 0:
-            imgs, labels = self._data_queue.get()
-            batch_result = self._model.evaluate(x=imgs, y=labels)
-            num_samples += len(labels)
-            if results == None:
-                results = len(labels) * batch_result
-            else:
-                results += len(labels) * batch_result
-        results /= num_samples
-        return results
+        for string_record in self._tf_record_db.get_record_iterator():
+            img, label = self._tf_record_db.read_example(string_record)
+            batch_imgs.append(img)
+            labels.append(label)
+            batch_labels.append(label)
+            if len(batch_imgs) == self._batch_size:
+                batch_pred_y = _pred_batch(batch_imgs, batch_labels)
+                pred_y.extend(batch_pred_y)
+                batch_imgs = []
+                batch_labels = []
+        if len(batch_labels) != 0:
+            batch_pred_y = _pred_batch(batch_imgs, batch_labels)
+            pred_y.extend(batch_pred_y)
+        numerical_y = np.argmax(labels, axis=1)
+        numerical_pred_y = np.argmax(pred_y, axis=1)
+        loss = log_loss(numerical_y, pred_y)
+        acc = accuracy_score(numerical_y, numerical_pred_y)
+        class_report = classification_report(numerical_y, numerical_pred_y)
+        cm = confusion_matrix(numerical_y, numerical_pred_y)
+        return {
+            'val_loss': loss,
+            'val_acc': acc,
+            'class_report': class_report,
+            'cm': cm
+        }
 
     def on_train_begin(self, logs={}):
         """create log save file on train begin
@@ -127,13 +127,12 @@ class TfRecordEvalCallback(Callback):
         result = self._evaluate()
         # update logs
         logs.update({'epoch': epoch})
-        logs.update({'val_loss': result[0]})
-        logs.update({'val_acc': result[1]})
+        logs.update(result)
         self.csv_file.write(
             '{epoch:02d},{loss:.5f},{acc:.5f},{val_loss:.5f},{val_acc:.5f}\n'.
             format(**logs))
         print(
-            '\nepoch: {epoch:02d},loss: {loss:.5f},acc: {acc:.5f},val_loss: {val_loss:.5f},val_acc: {val_acc:.5f}\n'.
+            '\nepoch: {epoch:02d},loss: {loss:.5f},acc: {acc:.5f},val_loss: {val_loss:.5f},val_acc: {val_acc:.5f}\n{class_report}\n{cm}\n'.
             format(**logs))
         #save checkpoint
         self._model.save_weights(self._checkpoint_save_path.format(**logs))
