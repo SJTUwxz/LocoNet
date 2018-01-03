@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #================================================================
-#   God Bless You. 
-#   
+#   God Bless You.
+#
 #   file name: tf_record_finetune.py
 #   author: klaus
 #   email: klaus.cheng@qq.com
 #   create date: 2017/12/29
-#   describtion: 
+#   description:
 #
 #================================================================
-
 
 import tensorflow as tf
 config = tf.ConfigProto()
@@ -20,6 +19,7 @@ from keras.backend.tensorflow_backend import set_session
 set_session(session)
 
 import os
+import sys
 import keras
 import numpy as np
 import keras_retinanet.losses
@@ -29,9 +29,8 @@ from keras_retinanet.utils.keras_version import check_keras_version
 from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 
-from preprocess.MyImageGenerator import MyImageDataGenerator
-from preprocess.tf_record_db import TfRecordDb
-from preprocess.evaluate_tf_record_callback import EvaluateTfRecordCallback
+from tfrecord_adapter.tfrecords_db import TfRecordDB
+from tfrecord_adapter.callbacks.tfrecord_eval import TfRecordEvalCallback
 
 
 def create_model(
@@ -55,56 +54,74 @@ def create_model(
 
 
 def train(run_name,
+          train_label_file,
           train_record_path,
+          val_label_file,
           val_record_path,
           batch_size=32,
+          num_classes=3,
+          image_shape=(224, 224),
+          channel=3,
           weights='./data/snapshots/001-retinanet/resnet50_05-0.39389.h5'):
     """train the model"""
     sess = keras.backend.get_session()
 
-    num_train = 103780
-    train_steps = num_train // batch_size
+    def swap_rgb2bgr(img, label):
+        img = img[..., ::-1]
+        return img, label
 
-    def swap_rgb2bgr(img_array):
-        return img_array[..., ::-1]
+    def substract_mean(img, label):
+        img -= [103.939, 116.779, 123.68]
+        return img, label
 
-    def substract_mean(img_array):
-        return img_array - [103.939, 116.779, 123.68]
+    def categorial_label(img, label):
+        if isinstance(label, (np.ndarray, )):
+            label = keras.utils.to_categorical(label, num_classes)
+        else:
+            label = tf.one_hot(label, num_classes)
+        return img, label
 
-    post_process = [swap_rgb2bgr, substract_mean]
+    post_processors = [swap_rgb2bgr, substract_mean, categorial_label]
 
-    # build train model
+    # train and val database
+    train_db = TfRecordDB(train_label_file, 'train', train_record_path,
+                          post_processors, num_classes, image_shape, channel)
+    val_db = TfRecordDB(val_label_file, 'val', val_record_path,
+                        post_processors, num_classes, image_shape, channel)
+
+    # steps per epoch
+    train_steps = train_db.get_steps(batch_size)
+
+    # create model
     model = create_model(fix_layers=False)
-    train_gen = TfRecordDb(None, 'train', train_record_path)
-    images, labels = train_gen.read_record(batch_size=batch_size)
-    for f in post_process:
-        images = f(images)
-    model_input = keras.layers.Input(tensor=images)
-    train_model = model(model_input)
-    train_model = keras.models.Model(inputs=model_input, outputs=train_model)
+
+    # optimizer
     optimizer = keras.optimizers.sgd(
         lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
-    train_model.compile(
-        loss='categorical_crossentropy',
-        optimizer=optimizer,
-        target_tensors=[labels],
-        metrics=['accuracy'])
-
-    # print model summary
-    # print(model.summary())
-    # print(train_model.summary())
 
     #callbacks
-    val_gen = TfRecordDb(None, 'val', val_record_path)
     snapshot_save_directory = './data/snapshots/{}'.format(run_name)
     log_save_directory = './data/logs/{}'.format(run_name)
     os.makedirs(snapshot_save_directory)
     os.makedirs(log_save_directory)
-    evaluate_callback = EvaluateTfRecordCallback(
-        model, val_gen, sess,
+    evaluate_callback = TfRecordEvalCallback(
+        model, val_db,
         os.path.join(snapshot_save_directory,
                      'snapshot_{epoch:02d}-{val_loss:.5f}--{val_acc:.5f}.h5'),
-        os.path.join(log_save_directory, 'training_log.csv'), post_process)
+        os.path.join(log_save_directory, 'training_log.csv'), batch_size)
+
+    # build train model
+    img_tensor, label_tensor = train_db.read_record(batch_size=batch_size)
+    model_input = keras.layers.Input(tensor=img_tensor)
+    train_model = model(model_input)
+    train_model = keras.models.Model(inputs=model_input, outputs=train_model)
+
+    # compile train model
+    train_model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        target_tensors=[label_tensor],
+        metrics=['accuracy'])
 
     # Fit the model using data from the TFRecord data tensors.
     coord = tf.train.Coordinator()
@@ -123,18 +140,28 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = 'integrate-tfrecord'
+    branch = '101-tfrecord'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
     batch_size = 32
-    # train_record_path = './data/tf_records/10w_nsp/train.record'
-    # val_record_path = './data/tf_records/10w_nsp/val.record'
+    num_classes = 3
+    image_shape = (224, 224)
+    channel = 3
+
+    train_label_file = './data/labels/10w_train.txt'
+    val_label_file = './data/labels/10w_val.txt'
     train_record_path = './data/tf_records/10w_nsp/uint8_train.record'
     val_record_path = './data/tf_records/10w_nsp/uint8_val.record'
-
+    pre_trained_weight = './data/snapshots/001-retinanet/resnet50_05-0.39389.h5'
     train(
-        batch_size=batch_size,
-        train_record_path=train_record_path,
-        val_record_path=val_record_path,
-        run_name=run_name)
+        run_name,
+        train_label_file,
+        train_record_path,
+        val_label_file,
+        val_record_path,
+        batch_size,
+        num_classes,
+        image_shape,
+        channel,
+        weights=pre_trained_weight)
