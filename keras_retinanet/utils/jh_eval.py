@@ -31,13 +31,30 @@ def evaluate_jh(generator, model, threshold=0.05):
     results = []
     image_ids = []
     #coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','val')))
+    sexy_sexy = 0
+    sexy_erotic = 0
+    erotic_sexy = 0
+    erotic_erotic = 0
     for i in range(generator.size()):
         image = generator.load_image(i)
         image = preprocess_image(image)
         image, scale = generator.resize_image(image)
 
         # run network
-        _, _, detections = model.predict_on_batch(np.expand_dims(image, axis=0))
+        _, _, detections,scores = model.predict_on_batch(np.expand_dims(image, axis=0))
+
+        jhclasses = scores[0]
+        if jhclasses[0] > jhclasses[1]:
+            if 'imgs' not in generator.load_image_name(i):
+                sexy_sexy += 1
+            else:
+                erotic_sexy += 1
+        elif jhclasses[0] < jhclasses[1]:
+            if 'imgs' not in generator.load_image_name(i):
+                sexy_erotic += 1
+            else:
+                erotic_erotic += 1
+            
 
         # clip to image shape
         detections[:, :, 0] = np.maximum(0, detections[:, :, 0])
@@ -92,8 +109,11 @@ def evaluate_jh(generator, model, threshold=0.05):
 
     # run COCO evaluation
     coco_eval = COCOeval(coco_true, coco_pred, 'bbox')
-    print (image_ids) 
     # coco_eval.params.imgIds = image_ids
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
+    print(sexy_sexy)
+    print( sexy_erotic)
+    print(erotic_erotic)
+    print( erotic_sexy)

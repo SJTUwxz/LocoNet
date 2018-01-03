@@ -18,6 +18,28 @@ import keras
 import keras_retinanet
 
 
+def classes_focal(alpha=0.44, gamma=2.0):
+    def _classes_focal(y_true, y_pred):
+        alpha = 0.44
+        gamma = 2.0
+        # discard batches, throw all labels / classifications on one big blob
+        # labels         = keras.backend.reshape(y_true, (-1, keras.backend.shape(y_true)))
+        # classes = keras.backend.reshape(y_pred, (-1, keras.backend.shape(y_pred)))
+        labels = y_true
+        classes = y_pred
+
+        alpha_factor = keras.backend.ones_like(labels) * alpha
+        alpha_factor = keras_retinanet.backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
+        focal_weight = keras_retinanet.backend.where(keras.backend.equal(labels, 1), 1 - classes, classes)
+        focal_weight = alpha_factor * focal_weight ** gamma
+
+        cls_loss = focal_weight * keras.backend.binary_crossentropy(labels, classes)
+        cls_loss = keras.backend.sum(cls_loss)
+
+        # cls_loss = cls_loss / (keras.backend.maximum(1.0, keras.backend.sum(anchor_state)))
+        return cls_loss
+    return _classes_focal
+
 def focal(alpha=0.25, gamma=2.0):
     def _focal(y_true, y_pred):
         # discard batches, throw all labels / classifications on one big blob
