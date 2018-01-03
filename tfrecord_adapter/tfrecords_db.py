@@ -149,6 +149,7 @@ class TfRecordDB(object):
         label = int(example.features.feature[self.y_key].int64_list.value[0])
         img_1d = np.fromstring(img_string, dtype=np.uint8)
         img = np.reshape(img_1d, self.get_input_shape())
+        img = np.asarray(img, dtype=np.float32)
         return self._apply_post_processors(img, label)
 
     def write_example(self, img, label):
@@ -163,7 +164,8 @@ class TfRecordDB(object):
 
         """
         feature = {
-            self.x_key: self._bytes_feature(tf.compat.as_bytes(img.tostring())),
+            self.x_key: self._bytes_feature(
+                tf.compat.as_bytes(img.tostring())),
             self.y_key: self._int64_feature(label)
         }
         # Create an example protocol buffer

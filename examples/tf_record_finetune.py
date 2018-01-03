@@ -75,7 +75,7 @@ def train(run_name,
         return img, label
 
     def categorial_label(img, label):
-        if isinstance(label, (np.ndarray, )):
+        if isinstance(label, (np.ndarray, int, long)):
             label = keras.utils.to_categorical(label, num_classes)
         else:
             label = tf.one_hot(label, num_classes)
