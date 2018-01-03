@@ -94,7 +94,7 @@ def train(run_name,
     train_steps = train_db.get_steps(batch_size)
 
     # create model
-    model = create_model(cls=num_classes, fix_layers=False)
+    model = create_model(cls=num_classes, fix_layers=True)
 
     # optimizer
     optimizer = keras.optimizers.sgd(
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = '003-finetune-sp'
+    branch = '003-finetune-sp-fix-layers'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
