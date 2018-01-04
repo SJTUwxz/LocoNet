@@ -94,11 +94,12 @@ def train(run_name,
     train_steps = train_db.get_steps(batch_size)
 
     # create model
-    model = create_model(cls=num_classes, fix_layers=True)
+    model = create_model(cls=num_classes, fix_layers=False)
 
     # optimizer
-    optimizer = keras.optimizers.sgd(
-        lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+    # optimizer = keras.optimizers.sgd(
+    # lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+    optimizer = keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
 
     #callbacks
     snapshot_save_directory = './data/snapshots/{}'.format(run_name)
@@ -110,6 +111,15 @@ def train(run_name,
         os.path.join(snapshot_save_directory,
                      'snapshot_{epoch:02d}-{val_loss:.5f}--{val_acc:.5f}.h5'),
         os.path.join(log_save_directory, 'training_log.csv'), batch_size)
+    reducelr = keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.1,
+        patience=10,
+        verbose=1,
+        mode='auto',
+        epsilon=0.0001,
+        cooldown=0,
+        min_lr=0),
 
     # build train model
     img_tensor, label_tensor = train_db.read_record(batch_size=batch_size)
@@ -147,7 +157,7 @@ if __name__ == '__main__':
 
     batch_size = 1
     num_classes = 2
-    image_shape = (600,1024)
+    image_shape = (600, 1024)
     channel = 3
 
     train_label_file = './data/labels/10w_train_sp.txt'
