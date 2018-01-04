@@ -13,6 +13,7 @@
 
 import os
 import cv2
+import sys
 import types
 import numpy as np
 import tensorflow as tf
@@ -198,6 +199,7 @@ class TfRecordDB(object):
                 # Serialize to string and write on the file
                 writer.write(example.SerializeToString())
             except Exception, e:
+                print(e)
                 self.broken_images.update({addrs[i]: 1})
         writer.close()
         sys.stdout.flush()
