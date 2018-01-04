@@ -56,6 +56,8 @@ class TfRecordDB(object):
         self.x_key = '{}/image'.format(self._prefix)
         self.y_key = '{}/label'.format(self._prefix)
 
+        self.broken_images = {}
+
         if self._post_processors != None:
             assert isinstance(
                 self._post_processors, (list, tuple, types.FunctionType)
@@ -199,7 +201,6 @@ class TfRecordDB(object):
                 # Serialize to string and write on the file
                 writer.write(example.SerializeToString())
             except Exception, e:
-                print(e)
                 self.broken_images.update({addrs[i]: 1})
         writer.close()
         sys.stdout.flush()
