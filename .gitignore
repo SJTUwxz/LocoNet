@@ -8,3 +8,4 @@ snapshots/*.h5
 my.vim
 data
 *.log
+snapshots/
