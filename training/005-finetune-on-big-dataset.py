@@ -75,7 +75,6 @@ def train(run_name,
         return img, label
 
     def categorial_label(img, label):
-        label -= 1
         if isinstance(label, (np.ndarray, int, long)):
             label = keras.utils.to_categorical(label, num_classes)
         else:
@@ -98,7 +97,7 @@ def train(run_name,
 
     # optimizer
     optimizer = keras.optimizers.sgd(
-        lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
+        lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
     # optimizer = keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
 
     #callbacks
@@ -142,24 +141,24 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = '003-finetune-sp-w600-h1024'
+    branch = '005-finetune-on-big-dataset'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
-    num_classes = 2
+    num_classes = 3
     channel = 3
 
     batch_size = 32
     image_shape = (224, 224)
-    train_record_path = './data/tf_records/10w_sp/train.record'
-    val_record_path = './data/tf_records/10w_sp/val.record'
+    train_record_path = './data/tf_records/full_nsp/train.record'
+    val_record_path = './data/tf_records/full_nsp/val.record'
     # batch_size = 1
     # image_shape = (600, 1024)
     # train_record_path = './data/tf_records/10w_sp/train_w600-h1024.record'
     # val_record_path = './data/tf_records/10w_sp/val_w600-h1024.record'
 
-    train_label_file = './data/labels/10w_train_sp.txt'
-    val_label_file = './data/labels/10w_val_sp.txt'
+    train_label_file = './data/labels/full-dataset/train.txt'
+    val_label_file = './data/labels/full-dataset/val.txt'
     pre_trained_weight = './data/snapshots/001-retinanet/resnet50_05-0.39389.h5'
     train(
         run_name,
