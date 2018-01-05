@@ -28,6 +28,7 @@ from keras_retinanet.utils.keras_version import check_keras_version
 import cv2
 import tensorflow as tf
 
+import os
 import argparse
 from preprocess.MyImageGenerator import MyImageDataGenerator
 
@@ -72,6 +73,16 @@ if __name__ == '__main__':
     model = keras.models.load_model(args.model, custom_objects=custom_objects)
 
     # create image data generator object
+
+    val_image_data_generator = keras.preprocessing.image.ImageDataGenerator()
+
+    # create a generator for testing data
+    val_generator = PascalVocGenerator(
+        '/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007',
+        'test',
+        val_image_data_generator,
+        batch_size=1,
+    )
     test_label = './data/labels/labeled_10w_test.txt'
     # test_gen = image_data_generator.flow_from_label_file(
             # test_label,
@@ -88,19 +99,23 @@ if __name__ == '__main__':
     y_pred = []
     f = open(test_label,'r')
     for k,line in enumerate(f.read().splitlines()):
-        fname, label = line.split(' ') 
-        # img = cv2.imread(fname)
-        # x = preprocess_image(img) 
-        # x, image_scale = resize_image(x)
-        img = image.load_img(fname, target_size=(299,299))
-        x = image.img_to_array(img)
-        x = np.expand_dims(x,axis=0)
-        x = x / 255.
-        print np.size(x) 
-        preds = model.predict(x)
-        pred = np.argmax(preds[0])
-        y_pred.append(pred) 
-        y_true.append(int(label))
-        print pred, label
+        fname, label = line.split(' ')
+        if '/normal/' in fname:
+            continue
+        image = cv2.imread(fname)
+        image = val_generator.preprocess_image(image)
+        image, scale = val_generator.resize_image(image)
 
-    print(classification_report(y_true, y_pred, target_names=['normal','sexy','erotic'])) 
+        _, _, detections, classes = model.predict_on_batch(np.expand_dims(image, axis=0))
+        pred = np.argmax(classes[0])
+        y_pred.append(pred) 
+        y_true.append(int(label)-1)
+        if pred != int(label)-1:
+            if int(label) == 1:
+                os.system('cp {} {}'.format(fname,'/home/xiziwang/tools/error_imgs/sexy/'))
+            else:
+                os.system('cp {} {}'.format(fname, '/home/xiziwang/tools/error_imgs/erotic/') ) 
+        print '{}: {}'.format(pred, int(label)-1) 
+
+    # print(classification_report(y_true, y_pred, target_names=['sexy','erotic'])) 
+    print(classification_report(y_true, y_pred)) 
