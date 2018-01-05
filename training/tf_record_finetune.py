@@ -94,11 +94,11 @@ def train(run_name,
     train_steps = train_db.get_steps(batch_size)
 
     # create model
-    model = create_model(cls=num_classes, fix_layers=True)
+    model = create_model(cls=num_classes, fix_layers=False)
 
     # optimizer
     optimizer = keras.optimizers.sgd(
-        lr=0.000001, decay=1e-6, momentum=0.9, nesterov=True)
+        lr=1e-5, decay=1e-8, momentum=0.9, nesterov=True)
     # optimizer = keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
 
     #callbacks
@@ -111,15 +111,6 @@ def train(run_name,
         os.path.join(snapshot_save_directory,
                      'snapshot_{epoch:02d}-{val_loss:.5f}--{val_acc:.5f}.h5'),
         os.path.join(log_save_directory, 'training_log.csv'), batch_size)
-    reducelr = keras.callbacks.ReduceLROnPlateau(
-        monitor='val_loss',
-        factor=0.1,
-        patience=10,
-        verbose=1,
-        mode='auto',
-        epsilon=0.0001,
-        cooldown=0,
-        min_lr=0),
 
     # build train model
     img_tensor, label_tensor = train_db.read_record(batch_size=batch_size)
@@ -162,7 +153,7 @@ if __name__ == '__main__':
     # image_shape = (224,224)
     # train_record_path = './data/tf_records/10w_sp/train.record'
     # val_record_path = './data/tf_records/10w_sp/val.record'
-    batch_size = 2
+    batch_size = 1
     image_shape = (600, 1024)
     train_record_path = './data/tf_records/10w_sp/train_w600-h1024.record'
     val_record_path = './data/tf_records/10w_sp/val_w600-h1024.record'

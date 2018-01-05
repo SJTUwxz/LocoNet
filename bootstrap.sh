@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-export PYTHONPATH="`pwd`/PythonAPI/:`pwd`"
+export PYTHONPATH="`pwd`/PythonAPI/:`pwd`:$PYTHONPATH"
 DATA_DIR=/data/users/$USER/002-retinanet 
 mkdir -p $DATA_DIR
 if [ ! -L data ]; then
