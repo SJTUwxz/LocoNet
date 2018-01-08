@@ -46,6 +46,7 @@ def random_transform(
     image,
     boxes,
     image_data_generator,
+    no_annotation,
     seed=None
 ):
     if seed is None:
@@ -56,6 +57,9 @@ def random_transform(
     # set fill mode so that masks are not enlarged
     fill_mode = image_data_generator.fill_mode
     image_data_generator.fill_mode = 'constant'
+
+    if no_annotation:
+        return image,np.zeros((1, 5))
 
     for index in range(boxes.shape[0]):
         # generate box mask and randomly transform it
