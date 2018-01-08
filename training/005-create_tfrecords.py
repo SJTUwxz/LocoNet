@@ -27,21 +27,23 @@ import tensorflow as tf
 from keras_extra.tfrecords_db import TfRecordDB
 
 
-def create_tfrecord(train_label_file,
-                    train_record_path,
-                    val_label_file,
-                    val_record_path,
+def create_tfrecord(label_file,
+                    record_path,
+                    prefix,
                     num_classes,
                     image_shape=(224, 224),
                     channel=3):
     """train the model"""
     sess = keras.backend.get_session()
-
     post_processors = None
-    train_db = TfRecordDB(train_label_file, 'train', train_record_path,
-                          post_processors, num_classes, image_shape, channel)
-    val_db = TfRecordDB(val_label_file, 'val', val_record_path,
-                        post_processors, num_classes, image_shape, channel)
+    val_db = TfRecordDB(
+        label_file=label_file,
+        prefix=prefix,
+        record_save_path=record_path,
+        post_processors=post_processors,
+        num_classes=num_classes,
+        image_shape=image_shape,
+        channel=channel)
 
     val_db.write_record()
 
@@ -55,10 +57,9 @@ if __name__ == '__main__':
     num_classes = 3
     image_shape = (224, 224)
     channel = 3
-    train_record_path = './data/tf_records/full_nsp/train.record'
-    val_record_path = './data/tf_records/full_nsp/val.record'
+    prefix = 'test'
 
-    train_label_file = './data/labels/full-dataset/train.txt'
-    val_label_file = './data/labels/full-dataset/val.txt'
-    create_tfrecord(train_label_file, train_record_path, val_label_file,
-                    val_record_path, num_classes, image_shape, channel)
+    record_path = './data/tf_records/full_nsp/test.record'
+    label_file = './data/labels/full-dataset/test.txt'
+    create_tfrecord(label_file, record_path, prefix, num_classes, image_shape,
+                    channel)
