@@ -26,7 +26,9 @@ from training.common import preprocess_input, preprocess_output
 
 
 def train(model,
+          train_label_file,
           train_record_path,
+          val_label_file,
           val_record_path,
           snapshot_save_path,
           log_save_path,
@@ -41,17 +43,17 @@ def train(model,
 
     # compile train model
     model.compile(
+        train_label_file,
+        train_record_path,
+        val_label_file,
+        val_record_path,
         snapshot_save_path=snapshot_save_path,
         log_save_path=log_save_path,
         loss='categorical_crossentropy',
         optimizer=optimizer,
         metrics=['accuracy'])
 
-    model.fit(
-        train_record_path,
-        val_record_path,
-        epochs=epochs,
-        initial_epoch=initial_epoch)
+    model.fit(epochs=epochs)
 
 
 if __name__ == "__main__":
@@ -63,6 +65,10 @@ if __name__ == "__main__":
     branch = '107-resnet50-on-full-db'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
+
+    train_label_file = './data/labels/full-dataset/train.txt'
+    val_label_file = './data/labels/full-dataset/val.txt'
+    test_label_file = './data/labels/full-dataset/test.txt'
 
     train_record_path = './data/tf_records/full_nsp/train.record'
     val_record_path = './data/tf_records/full_nsp/val.record'
@@ -89,7 +95,9 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'train':
         train(
             model,
+            train_label_file,
             train_record_path,
+            val_label_file,
             val_record_path,
             snapshot_save_path,
             log_save_path,
