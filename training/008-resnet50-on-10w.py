@@ -52,12 +52,15 @@ if __name__ == "__main__":
     epochs = 50
 
     run_type = sys.argv[1]
+    predict_img_path = None
+    eval_weights = None
     if len(sys.argv) == 3:
-        predict_img_path = sys.argv[2]
-    else:
-        predict_img_path = None
+        if run_type == 'predict':
+            predict_img_path = sys.argv[2]
+        else:
+            eval_weights = sys.argv[2]
 
     run(run_type, num_classes, input_shape, batch_size, preprocess_input_func,
         preprocess_output_func, weights, train_label_file, train_record_path,
         val_label_file, val_record_path, test_record_path, snapshot_save_path,
-        log_save_path, epochs, predict_img_path)
+        log_save_path, epochs, eval_weights, predict_img_path)

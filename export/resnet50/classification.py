@@ -11,6 +11,13 @@
 #
 #================================================================
 
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
+from keras.backend.tensorflow_backend import set_session
+set_session(session)
+
 import os
 import cv2
 import sys

@@ -69,6 +69,7 @@ def run(run_type,
         snapshot_save_path,
         log_save_path,
         epochs,
+        eval_weights=None,
         predict_img_path=None):
     """TODO: Docstring for run.
 
@@ -102,6 +103,7 @@ def run(run_type,
         preprocess_output=preprocess_output_func,
         weights=weights)
     if run_type == 'eval':
+        model._model.load_weights(eval_weights)
         model.evaluate(test_record_path, 'test')
     elif run_type == 'train':
         train(
