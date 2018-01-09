@@ -9,7 +9,7 @@ config.gpu_options.per_process_gpu_memory_fraction = 0.8
 session = tf.Session(config=config)
 
 import keras
-
+from keras.callbacks import CSVLogger
 import argparse
 import keras_retinanet.losses
 from keras_retinanet.models.jh_resnet import ResNet50RetinaNet
@@ -37,7 +37,7 @@ def create_model(weights='imagenet'):
         image,
         num_classes=10,
         weights=
-        '/home/xiziwang/projects/retinanet/snapshots/resnet50_05-0.39389.h5')
+        '/home/xiziwang/projects/legacy_retinanet/snapshots/resnet50_05-0.39389.h5')
 
 
 def parse_args():
@@ -65,6 +65,8 @@ if __name__ == '__main__':
     print('Creating model, this may take a second...')
 
     model = create_model()
+
+    csv_logger = CSVLogger('./data/logs/class3_pascal_train.log')
 
     D7_pool = model.get_layer('D7_pool').output
     Global_cls = keras.layers.Dense(
@@ -129,6 +131,7 @@ if __name__ == '__main__':
         callbacks=[
             keras.callbacks.ModelCheckpoint('./data/snapshots/class3retinanet_resnet50_{epoch:02d}-{val_loss:.5f}.h5', monitor='val_loss', verbose=1, save_best_only=False),
             keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0),
+            csv_logger,
         ],
     )
 
