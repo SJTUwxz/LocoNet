@@ -42,14 +42,12 @@ class Generator(object):
         self.shuffle_groups       = shuffle_groups
         self.image_min_side       = image_min_side
         self.image_max_side       = image_max_side
-
         if seed is None:
             seed = np.uint32((time.time() % 1)) * 1000
         np.random.seed(seed)
 
         self.group_index = 0
         self.lock        = threading.Lock()
-
         self.group_images()
 
     def size(self):
@@ -91,13 +89,16 @@ class Generator(object):
     def preprocess_image(self, image):
         return preprocess_image(image)
 
-    def preprocess_group(self, image_group, annotations_group):
+    def preprocess_group(self, image_group, annotations_group, image_names):
         for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
             # preprocess the image (subtract imagenet mean)
             image = preprocess_image(image)
 
+            no_annotation = False
+            if 'normal/' in image_names[index]:
+                no_annotation = True
             # randomly transform both image and annotations
-            image, annotations = random_transform(image, annotations, self.image_data_generator)
+            image, annotations = random_transform(image, annotations, self.image_data_generator, no_annotation)
 
             # resize image
             image, image_scale = self.resize_image(image)
@@ -137,14 +138,12 @@ class Generator(object):
             if self.group_index == 0 and self.shuffle_groups:
                 # shuffle groups at end of epoch
                 random.shuffle(self.groups)
-
         # load images and annotations
         image_group       = self.load_image_group(group_index)
         annotations_group = self.load_annotations_group(group_index)
         image_names       = self.load_name_group(group_index)
-
         # perform preprocessing steps
-        image_group, annotations_group = self.preprocess_group(image_group, annotations_group)
+        image_group, annotations_group = self.preprocess_group(image_group, annotations_group, image_names)
 
         # get the max image shape
         max_shape = tuple(max(image.shape[x] for image in image_group) for x in range(3))
@@ -156,12 +155,14 @@ class Generator(object):
         for image_index, image in enumerate(image_group):
             image_batch[image_index, :image.shape[0], :image.shape[1], :image.shape[2]] = image
 
-        class_batch = np.zeros((self.batch_size, 2), dtype=np.int)
+        class_batch = np.zeros((self.batch_size, 3), dtype=np.int)
         for image_index, im_name in enumerate(image_names):
             if 'imgs' in im_name:
-                class_batch[image_index] = [0, 1]
+                class_batch[image_index] = [0, 0, 1]
+            elif 'normal/' in im_name:
+                class_batch[image_index] = [1, 0, 0]
             else:
-                class_batch[image_index] = [1, 0] 
+                class_batch[image_index] = [0, 1, 0]
         # compute labels and regression targets
         labels_group      = [None] * self.batch_size
         regression_group = [None] * self.batch_size

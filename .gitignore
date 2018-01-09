@@ -4,7 +4,9 @@
 *.swp
 screenlog.*
 snapshots/*.h5
+*.h5
 *.json
 my.vim
 data
 *.log
+snapshots/

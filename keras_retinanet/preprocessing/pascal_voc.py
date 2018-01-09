@@ -24,23 +24,26 @@ from PIL import Image
 import cv2
 try:
     import xml.etree.cElementTree as ET
+    from xml.etree.cElementTree import Element, SubElement
 except ImportError:
     import xml.etree.ElementTree as ET
+    from xml.etree.ElementTree import Element, SubElement
 
 voc_classes = {
-    'breast'   : 0,
-    'vulva'     : 1,
-    'dick'        : 2,
-    'pubes'        : 3,
-    'ass'      : 4,
-    'breast_sexy'         : 5,
-    'frontleg_sexy'         : 6,
-    'ass_sexy'         : 7,
-    'back_sexy'       : 8,
-    'body_sexy'         : 9,
+    'breast': 0,
+    'vulva': 1,
+    'dick': 2,
+    'pubes': 3,
+    'ass': 4,
+    'breast_sexy': 5,
+    'frontleg_sexy': 6,
+    'ass_sexy': 7,
+    'back_sexy': 8,
+    'body_sexy': 9,
 }
 
-def _findNode(parent, name, debug_name = None, parse = None):
+
+def _findNode(parent, name, debug_name=None, parse=None):
     if debug_name is None:
         debug_name = name
 
@@ -51,35 +54,40 @@ def _findNode(parent, name, debug_name = None, parse = None):
         try:
             return parse(result.text)
         except ValueError as e:
-            raise_from(ValueError('illegal value for \'{}\': {}'.format(debug_name, e)), None)
+            raise_from(
+                ValueError('illegal value for \'{}\': {}'.format(
+                    debug_name, e)), None)
     return result
 
 
 class PascalVocGenerator(Generator):
-    def __init__(
-        self,
-        data_dir,
-        set_name,
-        image_data_generator,
-        classes=voc_classes,
-        image_extension='.jpg',
-        skip_truncated=False,
-        skip_difficult=False,
-        **kwargs
-    ):
-        self.data_dir             = data_dir
-        self.set_name             = set_name
-        self.classes              = classes
-        self.image_names          = [l.strip() for l in open(os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt')).readlines()]
-        self.image_extension      = image_extension
-        self.skip_truncated       = skip_truncated
-        self.skip_difficult       = skip_difficult
+    def __init__(self,
+                 data_dir,
+                 set_name,
+                 image_data_generator,
+                 classes=voc_classes,
+                 image_extension='.jpg',
+                 skip_truncated=False,
+                 skip_difficult=False,
+                 **kwargs):
+        self.data_dir = data_dir
+        self.set_name = set_name
+        self.classes = classes
+        self.image_names = [
+            l.strip()
+            for l in open(
+                os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt'))
+            .readlines()
+        ]
+        self.image_extension = image_extension
+        self.skip_truncated = skip_truncated
+        self.skip_difficult = skip_difficult
 
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
-
-        super(PascalVocGenerator, self).__init__(image_data_generator, **kwargs)
+        super(PascalVocGenerator, self).__init__(image_data_generator,
+                                                 **kwargs)
 
     def size(self):
         return len(self.image_names)
@@ -94,12 +102,16 @@ class PascalVocGenerator(Generator):
         return self.labels[label]
 
     def image_aspect_ratio(self, image_index):
-        path  = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
+        path = os.path.join(
+            self.data_dir, 'JPEGImages',
+            self.image_names[image_index] + self.image_extension)
         image = Image.open(path)
         return float(image.width) / float(image.height)
 
     def load_image(self, image_index):
-        path = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
+        path = os.path.join(
+            self.data_dir, 'JPEGImages',
+            self.image_names[image_index] + self.image_extension)
         return cv2.imread(path)
 
     def load_image_name(self, image_index):
@@ -111,12 +123,14 @@ class PascalVocGenerator(Generator):
 
         class_name = _findNode(element, 'name').text
         if class_name not in self.classes:
-            raise ValueError('class name \'{}\' not found in classes: {}'.format(class_name, list(self.classes.keys())))
+            raise ValueError(
+                'class name \'{}\' not found in classes: {}'.format(
+                    class_name, list(self.classes.keys())))
 
         box = np.zeros((1, 5))
         box[0, 4] = self.name_to_label(class_name)
 
-        bndbox    = _findNode(element, 'bndbox')
+        bndbox = _findNode(element, 'bndbox')
         box[0, 0] = _findNode(bndbox, 'xmin', 'bndbox.xmin', parse=float) - 1
         box[0, 1] = _findNode(bndbox, 'ymin', 'bndbox.ymin', parse=float) - 1
         box[0, 2] = _findNode(bndbox, 'xmax', 'bndbox.xmax', parse=float) - 1
@@ -126,15 +140,17 @@ class PascalVocGenerator(Generator):
 
     def __parse_annotations(self, xml_root):
         size_node = _findNode(xml_root, 'size')
-        width     = _findNode(size_node, 'width',  'size.width',  parse=float)
-        height    = _findNode(size_node, 'height', 'size.height', parse=float)
+        width = _findNode(size_node, 'width', 'size.width', parse=float)
+        height = _findNode(size_node, 'height', 'size.height', parse=float)
 
         boxes = np.zeros((0, 5))
         for i, element in enumerate(xml_root.iter('object')):
             try:
                 truncated, difficult, box = self.__parse_annotation(element)
             except ValueError as e:
-                raise_from(ValueError('could not parse object #{}: {}'.format(i, e)), None)
+                raise_from(
+                    ValueError('could not parse object #{}: {}'.format(i, e)),
+                    None)
 
             if truncated and self.skip_truncated:
                 continue
@@ -146,17 +162,32 @@ class PascalVocGenerator(Generator):
 
     def load_annotations(self, image_index):
         filename = self.image_names[image_index] + '.xml'
+        img = self.load_image(image_index)
+        assert isinstance(img, (np.ndarray) ) , "load image: " + filename
+        height, width, channels = img.shape
         try:
-            tree = ET.parse(os.path.join(self.data_dir, 'Annotations', filename))
+            if 'normal/' in filename:
+                tree = Element('annotation')
+                size = SubElement(tree, 'size')
+                height = SubElement(size, 'height')
+                height.text = str(height)
+                width = SubElement(size, 'width')
+                width.text = str(width)
+                depth = SubElement(size, 'depth')
+                depth.text = str(channels)
+                return tree
+            tree = ET.parse(
+                os.path.join(self.data_dir, 'Annotations', filename))
             return self.__parse_annotations(tree.getroot())
         except ET.ParseError as e:
-            raise_from(ValueError('invalid annotations file: {}: {}'.format(filename, e)), None)
+            raise_from(
+                ValueError('invalid annotations file: {}: {}'.format(
+                    filename, e)), None)
         except ValueError as e:
-            raise_from(ValueError('invalid annotations file: {}: {}'.format(filename, e)), None)
+            raise_from(
+                ValueError('invalid annotations file: {}: {}'.format(
+                    filename, e)), None)
 
     def load_annotations2(self, fn):
         tree = ET.parse(fn)
         return self.__parse_annotations(tree.getroot())
-    
-        
-
