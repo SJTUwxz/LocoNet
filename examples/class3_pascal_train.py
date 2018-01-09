@@ -37,7 +37,7 @@ def create_model(weights='imagenet'):
         image,
         num_classes=10,
         weights=
-        '/home/xiziwang/projects/legacy_retinanet/snapshots/resnet50_05-0.39389.h5')
+        '/home/xiziwang/projects/retinanet/data/snapshots/000-retinanet50-on-pascal/resnet50_05-0.39389.h5')
 
 
 def parse_args():
