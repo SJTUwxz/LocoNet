@@ -59,7 +59,7 @@ if __name__ == '__main__':
     channel = 3
     prefix = 'test'
 
-    record_path = './data/tf_records/full_nsp/test.record'
-    label_file = './data/labels/full-dataset/test.txt'
+    record_path = './data/tf_records/10w_nsp/test.record'
+    label_file = './data/labels/10w_test.txt'
     create_tfrecord(label_file, record_path, prefix, num_classes, image_shape,
                     channel)
