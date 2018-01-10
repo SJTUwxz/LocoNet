@@ -30,7 +30,7 @@ custom_objects = {
     'Anchors'               : keras_retinanet.layers.Anchors,
     '_smooth_l1'            : keras_retinanet.losses.smooth_l1(),
     '_focal'                : keras_retinanet.losses.focal(),
-    '_classes_focal'        : keras_retinanet.losses.classes_focal(),  
+    '_classes_focal'        : keras_retinanet.losses.classes_focal(),
 }
 
 
@@ -103,21 +103,21 @@ def default_regression_model(num_anchors, pyramid_feature_size=256, regression_f
     return keras.models.Model(inputs=inputs, outputs=outputs, name=name)
 
 
-def __create_pyramid_features(C3, C4, C5, D5, feature_size=256):
+def __create_pyramid_features(C3, C4, C5, feature_size=256):
     # upsample C5 to get P5 from the FPN paper
     #D5 = keras.layers.Conv2D(feature_size, kernel_size=3, strides=1, padding='same', name='D5_conv1')(C5)
     #D5 = keras.layers.Conv2D(feature_size, kernel_size=3, strides=1, padding='same', name='D5_conv2')(D5)
-    
+
     #D6 = keras.layers.Conv2D(feature_size, kernel_size=3, strides=2, padding='same', name='D6')(D5)
     #D7 = keras.layers.Conv2D(feature_size, kernel_size=3, strides=2, padding='same', name='D7')(D6)
 
     #D7_pool = keras.layers.GlobalAveragePooling2D(name='D7_pool')(D7)
 
     #D8 = keras.layers.Dense(activation='softmax', name='D8_softmax')(D7_pool)
-    P5 = keras.layers.Add(name='P6-7_merged')([C5, D5])
-    P5           = keras.layers.Conv2D(feature_size, kernel_size=1, strides=1, padding='same', name='P5')(P5)
+    # P5 = keras.layers.Add(name='P6-7_merged')([C5, D5])
+    P5           = keras.layers.Conv2D(feature_size, kernel_size=1, strides=1, padding='same', name='P5')(C5)
     P5_upsampled = keras_retinanet.layers.UpsampleLike(name='P5_upsampled')([P5, C4])
-    
+
     # add P5 elementwise to C4
     P4           = keras.layers.Conv2D(feature_size, kernel_size=1, strides=1, padding='same', name='C4_reduced')(C4)
     P4           = keras.layers.Add(name='P4_merged')([P5_upsampled, P4])
@@ -139,19 +139,20 @@ def __create_pyramid_features(C3, C4, C5, D5, feature_size=256):
     return P3, P4, P5, P6, P7
 
 def __create_resnet_features(C3, C4, C5):
-    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same',name='D5_inter_conv1')(C5)
-    D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_inter_conv2')(D5_inter)
-    D5 = keras.layers.Conv2D(2048, kernel_size=3, strides=1, padding='same', name='D5')(D5_inter)
+    # D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same',name='D5_inter_conv1')(C5)
+    # D5_inter = keras.layers.Conv2D(256, kernel_size=3, strides=1, padding='same', name='D5_inter_conv2')(D5_inter)
+    # D5 = keras.layers.Conv2D(2048, kernel_size=3, strides=1, padding='same', name='D5')(D5_inter)
 
-    D6 = keras.layers.Conv2D(512, kernel_size=3, strides=2, padding='same', name='D6')(D5)
+    # D6 = keras.layers.Conv2D(512, kernel_size=3, strides=2, padding='same', name='D6')(D5)
 
-    D7 = keras.layers.Conv2D(256, kernel_size=3, strides=2, padding='same', name='D7')(D6)
-    D7_pool = keras.layers.GlobalAveragePooling2D(name='D7_pool')(D7)
-    
+    # D7 = keras.layers.Conv2D(256, kernel_size=3, strides=2, padding='same', name='D7')(D6)
+    # D7_pool = keras.layers.GlobalAveragePooling2D(name='D7_pool')(D7)
     #D8 = keras.layers.Reshape((-1, 3), name='resnet_classification_reshape')(D7_pool)
-    Global_cls = keras.layers.Dense(2, activation='softmax', name='global_cls')(D7_pool)
+    C5_pool = keras.layers.GlobalAveragePooling2D(name='c5_pool')(C5)
+    Global_cls = keras.layers.Dense(
+        3, activation='softmax', name='global_cls')(C5_pool)
 
-    return Global_cls, D5
+    return Global_cls
 
 class AnchorParameters:
     def __init__(self, sizes, strides, ratios, scales):
@@ -217,8 +218,8 @@ def retinanet(
     _, C3, C4, C5 = backbone.outputs  # we ignore C2
 
     # compute pyramid features as per https://arxiv.org/abs/1708.02002
-    Global_cls, D5 = __create_resnet_features(C3, C4, C5)
-    features = create_pyramid_features(C3, C4, C5, D5)
+    Global_cls = __create_resnet_features(C3, C4, C5)
+    features = create_pyramid_features(C3, C4, C5)
 
     # for all pyramid levels, run available submodels
     pyramid = __build_pyramid(submodels, features)
@@ -234,12 +235,12 @@ def retinanet_bbox(inputs, num_classes, nms=True, name='retinanet-bbox', *args, 
     anchors        = model.outputs[0]
     regression     = model.outputs[1]
     classification = model.outputs[2]
-    global_cls = model.outputs[3] 
+    global_cls = model.outputs[3]
     other = None
     # if len(model.outputs) > 3:
-        # other = keras.layers.Concatenate(axis=2, name='other')(model.outputs[2:])
+    # other = keras.layers.Concatenate(axis=2, name='other')(model.outputs[2:])
     # else:
-        # other = None
+    # other = None
 
     # apply predicted regression to anchors
     boxes      = keras_retinanet.layers.RegressBoxes(name='boxes')([anchors, regression])

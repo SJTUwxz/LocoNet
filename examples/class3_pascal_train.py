@@ -19,13 +19,13 @@ from keras.callbacks import ModelCheckpoint
 from keras.backend.tensorflow_backend import set_session
 from keras.optimizers import SGD
 # from preprocessing.image import ImageDataGenerator
-
+import os
 import keras.preprocessing.image
-
+import time
 #from preprocess.MyImageGenerator import MyImageDataGenerator
 
 
-def get_session(gpu_fraction=0.7):
+def get_session(gpu_fraction=1.0):
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = gpu_fraction
     # config.gpu_options.allow_growth = true
@@ -36,8 +36,8 @@ def create_model(weights='imagenet'):
     return ResNet50RetinaNet(
         image,
         num_classes=10,
-        weights=
-        '/home/xiziwang/projects/retinanet/data/snapshots/000-retinanet50-on-pascal/resnet50_05-0.39389.h5')
+        weights=weights)
+        # '/home/xiziwang/projects/retinanet/data/snapshots/000-retinanet50-on-pascal/resnet50_05-0.39389.h5')
 
 
 def parse_args():
@@ -66,13 +66,24 @@ if __name__ == '__main__':
 
     model = create_model()
 
-    csv_logger = CSVLogger('./data/logs/class3_pascal_train.log')
+    t = time.time()
+    t_str = time.strftime("%b-%d-%Y-%H:%M:%S", time.gmtime(t))
+    branch_name = '201-simple-cls'
+    path = os.path.join( '{}/{}'.format(branch_name, t_str) )
 
-    D7_pool = model.get_layer('D7_pool').output
-    Global_cls = keras.layers.Dense(
-        3, activation='softmax', name='global_3cls')(D7_pool)
+    os.system('mkdir ./data/{}/'.format(branch_name) )
+    os.system( 'mkdir ./data/{}'.format(path) ) 
 
-    model.outputs[-1] = Global_cls
+    os.system( 'mkdir ./data/{}/logs'.format(path) ) 
+    os.system( 'mkdir ./data/{}/snapshots'.format(path) ) 
+
+    csv_logger = CSVLogger('./data/{}/logs/train.log'.format(path) )
+
+    # D7_pool = model.get_layer('D7_pool').output
+    # Global_cls = keras.layers.Dense(
+        # 3, activation='softmax', name='global_3cls')(D7_pool)
+
+    # model.outputs[-1] = Global_cls
     new_model = keras.models.Model(inputs=model.inputs, outputs=model.outputs)
 
     # for layer in new_model.layers:
@@ -88,7 +99,7 @@ if __name__ == '__main__':
         loss={
             'regression'    : keras_retinanet.losses.smooth_l1(),
             'classification': keras_retinanet.losses.focal(),
-            'global_3cls': keras_retinanet.losses.classes_focal() 
+            'global_cls': keras_retinanet.losses.classes_focal() 
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001),
         metrics=['accuracy']
@@ -129,11 +140,11 @@ if __name__ == '__main__':
         validation_data=val_generator,
         validation_steps= len(val_generator.image_names) // args.batch_size,
         callbacks=[
-            keras.callbacks.ModelCheckpoint('./data/snapshots/class3retinanet_resnet50_{epoch:02d}-{val_loss:.5f}.h5', monitor='val_loss', verbose=1, save_best_only=False),
+            keras.callbacks.ModelCheckpoint('./data/'+path+'/snapshots/simple_resnet_{epoch:02d}-{val_loss:.5f}.h5' , monitor='val_loss', verbose=1, save_best_only=False),
             keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0),
             csv_logger,
         ],
     )
 
     # store final result too
-    new_model.save('.data/snapshots/class3retinanet_resnet50_voc_final.h5')
+    new_model.save('.data/{}/snapshots/simple_resnet_voc_final.h5'.format(path) )
