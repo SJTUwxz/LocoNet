@@ -24,37 +24,37 @@ from pycocotools.cocoeval import COCOeval
 import numpy as np
 import json
 import os
+from sklearn.metrics import classification_report
 
 
 def evaluate_jh(generator, model, threshold=0.05):
     # start collecting results
     results = []
     image_ids = []
+    y_pred = []
+    y_true = []
+
     #coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','val')))
-    sexy_sexy = 0
-    sexy_erotic = 0
-    erotic_sexy = 0
-    erotic_erotic = 0
     for i in range(generator.size()):
         image = generator.load_image(i)
         image = preprocess_image(image)
+
+        #resize image
         image, scale = generator.resize_image(image)
 
         # run network
-        _, _, detections,scores = model.predict_on_batch(np.expand_dims(image, axis=0))
+        _, _, detections, scores = model.predict_on_batch(
+            np.expand_dims(image, axis=0))
 
         jhclasses = scores[0]
-        if jhclasses[0] > jhclasses[1]:
-            if 'imgs' not in generator.load_image_name(i):
-                sexy_sexy += 1
-            else:
-                erotic_sexy += 1
-        elif jhclasses[0] < jhclasses[1]:
-            if 'imgs' not in generator.load_image_name(i):
-                sexy_erotic += 1
-            else:
-                erotic_erotic += 1
-            
+        pred = np.argmax(jhclasses)
+        y_pred.append(pred)
+        if 'imgs' in generator.load_image(i):
+            y_true.append(2)
+        elif 'normal/' in generator.load_image(i):
+            y_true.append(0)
+        else:
+            y_true.append(1) 
 
         # clip to image shape
         detections[:, :, 0] = np.maximum(0, detections[:, :, 0])
@@ -77,11 +77,11 @@ def evaluate_jh(generator, model, threshold=0.05):
             for label in positive_labels:
                 image_result = {
                     #'image_id'    : generator.image_names[i],
-                    'image_id' : i,
+                    'image_id': i,
                     #'category_id' : generator.label_to_name(label),
-                    'category_id' : label,
-                    'score'       : float(detection[4 + label]),
-                    'bbox'        : (detection[:4]).tolist(),
+                    'category_id': label,
+                    'score': float(detection[4 + label]),
+                    'bbox': (detection[:4]).tolist(),
                 }
 
                 # append detection to results
@@ -94,17 +94,26 @@ def evaluate_jh(generator, model, threshold=0.05):
         print('{}/{}'.format(i, len(generator.image_names)), end='\r')
 
     #if not len(results):
-        # return
+    # return
 
     # write output
-    json.dump(results, open('{}_bbox_results.json'.format(generator.set_name), 'w'), indent=4)
-    json.dump(image_ids, open('{}_processed_image_ids.json'.format(generator.set_name), 'w'), indent=4)
+    json.dump(
+        results,
+        open('{}_bbox_results.json'.format(generator.set_name), 'w'),
+        indent=4)
+    json.dump(
+        image_ids,
+        open('{}_processed_image_ids.json'.format(generator.set_name), 'w'),
+        indent=4)
 
     # load results in COCO evaluation tool
     #coco_true = generator.coco
     data_dir = '/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007'
     coco = COCO()
-    coco_true = coco.loadRes(coco.loadNumpyAnnotations(coco.createAnnNumpy('/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007','test'))) 
+    coco_true = coco.loadRes(
+        coco.loadNumpyAnnotations(
+            coco.createAnnNumpy(
+                '/data/users/xiziwang/tools/nsp/JHdevkit/VOC2007', 'test')))
     coco_pred = coco.loadRes('{}_bbox_results.json'.format(generator.set_name))
 
     # run COCO evaluation
@@ -113,7 +122,4 @@ def evaluate_jh(generator, model, threshold=0.05):
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
-    print(sexy_sexy)
-    print( sexy_erotic)
-    print(erotic_erotic)
-    print( erotic_sexy)
+    print(classification_report(y_true, y_pred) ) 
