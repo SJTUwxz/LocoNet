@@ -445,6 +445,8 @@ class COCO:
         filenames = f.read().splitlines()
         image_id = 0
         for fname in filenames:
+            if 'normal/' in fname:
+                continue
             xmlfname = os.path.join(data_dir, 'Annotations',fname+'.xml')
             tree = ET.parse(xmlfname)
             root = tree.getroot()

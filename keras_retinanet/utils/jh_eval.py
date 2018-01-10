@@ -49,10 +49,12 @@ def evaluate_jh(generator, model, threshold=0.05):
         jhclasses = scores[0]
         pred = np.argmax(jhclasses)
         y_pred.append(pred)
-        if 'imgs' in generator.load_image(i):
+        if 'imgs' in generator.load_image_name(i):
             y_true.append(2)
-        elif 'normal/' in generator.load_image(i):
+        elif 'normal/' in generator.load_image_name(i):
+            
             y_true.append(0)
+            continue
         else:
             y_true.append(1) 
 
