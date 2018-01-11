@@ -44,6 +44,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Simple training script for Pascal VOC object detection.')
     parser.add_argument('voc_path', help='Path to Pascal VOC directory (ie. /tmp/VOCdevkit/VOC2007).')
     parser.add_argument('--weights', help='Weights to use for initialization (defaults to ImageNet).', default='imagenet')
+    parser.add_argument( '--branch', help= 'branch name', default= 'unnamed') 
     parser.add_argument('--batch-size', help='Size of the batches.', default=1, type=int)
     parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
 
@@ -68,10 +69,9 @@ if __name__ == '__main__':
 
     t = time.time()
     t_str = time.strftime("%b-%d-%Y-%H:%M:%S", time.gmtime(t))
-    branch_name = '201-simple-cls'
-    path = os.path.join( '{}/{}'.format(branch_name, t_str) )
+    path = os.path.join( '{}/{}'.format(args.branch, t_str) )
 
-    os.system('mkdir ./data/{}/'.format(branch_name) )
+    os.system('mkdir ./data/{}/'.format(args.branch) )
     os.system( 'mkdir ./data/{}'.format(path) ) 
 
     os.system( 'mkdir ./data/{}/logs'.format(path) ) 
