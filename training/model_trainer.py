@@ -20,6 +20,8 @@ set_session(session)
 
 import keras
 from keras_extra.applications.vgg16 import VGG16
+from keras_extra.applications.resnet50 import ResNet50
+from training.cpn import CPN
 from training.common import preprocess_input, preprocess_output
 
 
@@ -54,7 +56,8 @@ def train(model,
     model.fit(epochs=epochs)
 
 
-def run(run_type,
+def run(model_name,
+        run_type,
         num_classes,
         input_shape,
         batch_size,
@@ -78,8 +81,8 @@ def run(run_type,
         num_classes (TODO): TODO
         input_shape (TODO): TODO
         batch_size (TODO): TODO
-        preprocess_input (TODO): TODO
-        preprocess_output (TODO): TODO
+        preprocess_input_func (TODO): TODO
+        preprocess_output_func (TODO): TODO
         weights (TODO): TODO
         train_label_file (TODO): TODO
         train_record_path (TODO): TODO
@@ -95,13 +98,22 @@ def run(run_type,
     Returns: TODO
 
     """
-    model = VGG16(
+    if model_name == 'resnet50':
+        model_func = ResNet50
+    elif model_name == 'cpn':
+        model_func = CPN
+    elif model_name == 'vgg16':
+        model_func = VGG16
+    else:
+        raise ValueError('model_name must be one of resnet50, cpn, vgg16')
+    model = model_func(
         num_classes=num_classes,
         input_shape=input_shape,
         batch_size=batch_size,
         preprocess_input=preprocess_input_func,
         preprocess_output=preprocess_output_func,
         weights=weights)
+    model.summary()
     if run_type == 'eval':
         model._model.load_weights(eval_weights)
         model.evaluate(test_record_path, 'test')

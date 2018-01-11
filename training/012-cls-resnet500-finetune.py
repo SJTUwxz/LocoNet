@@ -17,28 +17,21 @@ from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 
 from keras.preprocessing.image import ImageDataGenerator
+from keras.applications import resnet50
 from keras_extra.generator import LabelFileIterator
 from keras_extra.utils.image import preprocess_image
 
 
-def create_model(
-        weights='./data/snapshots/001-retinanet/resnet50_05-0.39389.h5',
-        cls=3,
-        fix_layers=False):
+def create_model(weights='imagenet', cls=3, fix_layers=False):
     image = keras.layers.Input((None, None, 3))
-    model = ResNet50RetinaNet(image, num_classes=10, weights=weights)
-    D7_pool = model.get_layer('D7_pool').output
-    Global_cls = keras.layers.Dense(
-        cls, activation='softmax', name='global_3cls')(D7_pool)
-    new_model = keras.models.Model(inputs=model.inputs, outputs=[Global_cls])
-
-    if fix_layers:
-        for layer in new_model.layers:
-            layer.trainable = False
-        train_layers = ['D6', 'D7', 'D7_pool', 'global_3cls']
-        for trainable_layer in train_layers:
-            new_model.get_layer(trainable_layer).trainable = True
-    return new_model
+    base_model = resnet50.ResNet50(
+        input_tensor=image, include_top=False, weights=None)
+    x = base_model.output
+    # x = keras.layers.Flatten()(x)
+    x = keras.layers.GlobalAveragePooling2D()(x)
+    x = keras.layers.Dense(cls, activation='softmax', name='global_3cls')(x)
+    model = keras.models.Model(inputs=base_model.input, outputs=x)
+    return model
 
 
 def train(run_name,
@@ -52,7 +45,7 @@ def train(run_name,
     print('Creating model, this may take a second...')
     model = create_model(cls=num_classes, fix_layers=fix_layers)
     optimizer = keras.optimizers.sgd(
-        lr=1e-5, decay=1e-8, momentum=0.9, nesterov=True)
+        lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(
         loss={'global_3cls': 'categorical_crossentropy'},
         optimizer=optimizer,
@@ -74,7 +67,7 @@ def train(run_name,
 
         """
         img = preprocess_image(img)
-        label -= 1
+        # label -= 1
         return img, label
 
     train_gen = LabelFileIterator(
@@ -125,15 +118,15 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = '004-finetune-sp-keep-aspect'
+    branch = '012-cls-resnet500-finetune'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
-    num_classes = 2
+    num_classes = 3
     fix_layers = False
     batch_size = 1
-    train_label_file = './data/labels/10w_train_sp.txt'
-    val_label_file = './data/labels/10w_val_sp.txt'
+    train_label_file = './data/labels/10w_train.txt'
+    val_label_file = './data/labels/10w_val.txt'
 
     train(
         batch_size=batch_size,
@@ -141,4 +134,4 @@ if __name__ == '__main__':
         val_label_file=val_label_file,
         run_name=run_name,
         num_classes=num_classes,
-        fix_layers=False)
+        fix_layers=fix_layers)

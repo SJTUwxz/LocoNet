@@ -23,6 +23,7 @@ from keras_extra.utils.image import preprocess_image
 
 def create_model(
         weights='./data/snapshots/001-retinanet/resnet50_05-0.39389.h5',
+        # weights='imagenet',
         cls=3,
         fix_layers=False):
     image = keras.layers.Input((None, None, 3))
@@ -31,6 +32,7 @@ def create_model(
     Global_cls = keras.layers.Dense(
         cls, activation='softmax', name='global_3cls')(D7_pool)
     new_model = keras.models.Model(inputs=model.inputs, outputs=[Global_cls])
+    # new_model.load_weights(weights, by_name=True)
 
     if fix_layers:
         for layer in new_model.layers:
@@ -74,7 +76,7 @@ def train(run_name,
 
         """
         img = preprocess_image(img)
-        label -= 1
+        # label -= 1
         return img, label
 
     train_gen = LabelFileIterator(
@@ -125,15 +127,15 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = '004-finetune-sp-keep-aspect'
+    branch = '013-cls-stage1-without-normal'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
-    num_classes = 2
+    num_classes = 3
     fix_layers = False
     batch_size = 1
-    train_label_file = './data/labels/10w_train_sp.txt'
-    val_label_file = './data/labels/10w_val_sp.txt'
+    train_label_file = './data/labels/10w_train.txt'
+    val_label_file = './data/labels/10w_val.txt'
 
     train(
         batch_size=batch_size,
@@ -141,4 +143,4 @@ if __name__ == '__main__':
         val_label_file=val_label_file,
         run_name=run_name,
         num_classes=num_classes,
-        fix_layers=False)
+        fix_layers=fix_layers)

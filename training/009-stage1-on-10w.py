@@ -29,7 +29,7 @@ if __name__ == "__main__":
     import logging
     logging.getLogger().setLevel(logging.INFO)
     run_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    branch = '008-resnet50-on-10w'
+    branch = '009-stage1-on-10w'
     run_name = '{}/{}'.format(branch, run_time)
     logging.info('run_name: ' + run_name)
 
@@ -60,8 +60,7 @@ if __name__ == "__main__":
         else:
             eval_weights = sys.argv[2]
 
-    model_name = 'resnet50'
-
+    model_name = 'cpn'
     run(model_name, run_type, num_classes, input_shape, batch_size,
         preprocess_input_func, preprocess_output_func, weights,
         train_label_file, train_record_path, val_label_file, val_record_path,

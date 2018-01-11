@@ -19,7 +19,8 @@ from keras.backend.tensorflow_backend import set_session
 set_session(session)
 
 import keras
-from keras_extra.applications.vgg16 import VGG16
+
+from training.cpn import CPN
 from training.common import preprocess_input, preprocess_output
 
 
@@ -95,7 +96,7 @@ def run(run_type,
     Returns: TODO
 
     """
-    model = VGG16(
+    model = CPN(
         num_classes=num_classes,
         input_shape=input_shape,
         batch_size=batch_size,
